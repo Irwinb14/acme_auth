@@ -10,6 +10,13 @@ require("dotenv").config();
 // middleware
 app.use(express.json());
 
+const requireToken = async (req, res, next) => {
+  if (req.headers.authorization) {
+    req.user = await User.byToken(req.headers.authorization);
+    next();
+  }
+};
+
 // routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
@@ -22,22 +29,18 @@ app.post("/api/auth", async (req, res, next) => {
   }
 });
 
-app.get("/api/auth", async (req, res, next) => {
+app.get("/api/auth", requireToken, async (req, res, next) => {
   try {
-    res.send(await User.byToken(req.headers.authorization));
+    res.send(req.user);
   } catch (ex) {
     next(ex);
   }
 });
 
-app.get("/api/users/:id/notes", async (req, res, next) => {
+app.get("/api/users/:id/notes", requireToken, async (req, res, next) => {
   try {
-    // const user = await User.byToken(req.headers.authorization, {
-    //   include: Note,
-    // });
     const user = await User.findByPk(req.params.id, { include: Note });
-    const loginUser = await User.byToken(req.headers.authorization);
-
+    const loginUser = req.user;
     if (Number(req.params.id) === loginUser.id) res.send(user.notes);
   } catch (ex) {
     next(ex);
