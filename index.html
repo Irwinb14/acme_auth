@@ -41,6 +41,7 @@
 
       const App = () => {
         const [auth, setAuth] = React.useState({});
+        const [note, setNote] = React.useState([]);
 
         const attemptTokenLogin = async () => {
           const token = window.localStorage.getItem("token");
@@ -50,9 +51,19 @@
                 authorization: token,
               },
             });
+            console.log("auth :", auth);
             setAuth(auth);
+            const { data: noteData } = await axios.get(
+              `/api/users/${auth.id}/notes`
+            );
+            setNote(noteData);
+            console.log("noteData:", noteData);
+
+            console.log("note inside atemptTokenLogin", note);
           }
         };
+        console.log("note Outside", note);
+
         React.useEffect(() => {
           attemptTokenLogin();
         }, []);
@@ -74,6 +85,7 @@
         return (
           <div>
             Welcome {auth.username}!<button onClick={logout}>Logout</button>
+            <ul>{note[0] ? note.map((ele) => <li>{ele.text} </li>) : ""}</ul>
           </div>
         );
       };
