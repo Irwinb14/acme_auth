@@ -51,18 +51,19 @@
                 authorization: token,
               },
             });
-            console.log("auth :", auth);
-            setAuth(auth);
-            const { data: noteData } = await axios.get(
-              `/api/users/${auth.id}/notes`
-            );
-            setNote(noteData);
-            console.log("noteData:", noteData);
 
-            console.log("note inside atemptTokenLogin", note);
+            setAuth(auth);
+
+            const { data: noteData } = await axios.get(
+              `/api/users/${auth.id}/notes`, {
+              headers: {
+                authorization: token,
+              },
+            });
+
+            setNote(noteData);
           }
         };
-        console.log("note Outside", note);
 
         React.useEffect(() => {
           attemptTokenLogin();
@@ -85,7 +86,7 @@
         return (
           <div>
             Welcome {auth.username}!<button onClick={logout}>Logout</button>
-            <ul>{note[0] ? note.map((ele) => <li>{ele.text} </li>) : ""}</ul>
+            <ul>{note[0] ? note.map((ele) => <li key={ele.id}>{ele.text} </li>) : ""}</ul>
           </div>
         );
       };

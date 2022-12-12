@@ -4,6 +4,7 @@ const {
   models: { User, Note },
 } = require("./db");
 const path = require("path");
+const { user } = require("pg/lib/defaults");
 require("dotenv").config();
 
 // middleware
@@ -31,9 +32,13 @@ app.get("/api/auth", async (req, res, next) => {
 
 app.get("/api/users/:id/notes", async (req, res, next) => {
   try {
+    // const user = await User.byToken(req.headers.authorization, {
+    //   include: Note,
+    // });
     const user = await User.findByPk(req.params.id, { include: Note });
-    console.log(user);
-    res.send(user.notes);
+    const loginUser = await User.byToken(req.headers.authorization);
+
+    if (Number(req.params.id) === loginUser.id) res.send(user.notes);
   } catch (ex) {
     next(ex);
   }
