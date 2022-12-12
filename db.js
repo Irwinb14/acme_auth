@@ -4,6 +4,7 @@ const config = {
   logging: false,
 };
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 if (process.env.LOGGING) {
   delete config.logging;
@@ -18,14 +19,16 @@ const User = conn.define("user", {
   password: STRING,
 });
 
+User.beforeCreate(async (user) => {
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(user.password, saltRounds);
+  user.password = hashedPassword;
+});
+
 User.byToken = async (token) => {
   try {
     const SECRET_KEY = process.env.JWT;
     const { userId } = jwt.verify(token, SECRET_KEY);
-
-    console.log(userId);
-    // console.log("user     :", user);
-    // console.log("SECRET_KEY     :", SECRET_KEY);
 
     if (userId) {
       const user = await User.findByPk(userId);
@@ -45,13 +48,12 @@ User.authenticate = async ({ username, password }) => {
   const user = await User.findOne({
     where: {
       username,
-      password,
     },
   });
-  console.log(user);
+
   const SECRET_KEY = process.env.JWT;
-  const token = await jwt.sign({ userId: user.id }, SECRET_KEY);
-  if (user) {
+  const token = jwt.sign({ userId: user.id }, SECRET_KEY);
+  if (user && (await bcrypt.compare(password, user.password))) {
     return token;
   }
   const error = Error("bad credentials");
